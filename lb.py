@@ -13,7 +13,7 @@ class Automata:
 
     @staticmethod
     def epsilon():
-        return ":e:"
+        return "e"
 
     def setstartstate(self, state):
         self.startstate = state
@@ -76,7 +76,7 @@ class Automata:
             for state in tostates:
                 for char in tostates[state]:
                     print ("  ",fromstate, "->", state, "on '"+char+"'",)
-            print
+
 
     def getPrintText(self):
         text = "language: {" + ", ".join(self.language) + "}\n"
@@ -198,6 +198,9 @@ class DFAfromNFA:
         self.buildDFA(nfa)
         self.minimise()
 
+    def getDFA(self):
+        return self.dfa
+
     def getMinimisedDFA(self):
         return self.minDFA
 
@@ -239,9 +242,6 @@ class DFAfromNFA:
             if nfa.finalstates[0] in state:
                 dfa.addfinalstates(value)
         self.dfa = dfa
-
-    def getDFA(self):
-        return self.dfa
 
     def acceptsString(self, string):
         currentstate = self.dfa.startstate
@@ -326,6 +326,13 @@ class DFAfromNFA:
             self.minDFA = self.dfa
         else:
             self.minDFA = self.dfa.newBuildFromEquivalentStates(equivalent, pos)
+    # def minimise(self):
+    #     sets=list()
+    #     sets.append(self.dfa.startstate)
+    #     sets.append(self.dfa.finalstates)
+    #     return "hello"
+
+
 
 class NFAfromRegex:
     """class for building e-nfa from regular expressions"""
@@ -356,7 +363,7 @@ class NFAfromRegex:
         previous = "::e::"
         for char in self.regex:
             if char in self.alphabet:
-                language.add(char)
+                if char != 'e':language.add(char)
                 if previous != self.dot and (previous in self.alphabet or previous in [self.closingBracket,self.star]):
                     self.addOperatorToStack(self.dot)
                 self.automata.append(BuildAutomata.basicstruct(char))
