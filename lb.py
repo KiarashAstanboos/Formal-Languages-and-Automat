@@ -1,6 +1,3 @@
-from os import popen
-import time
-
 class Automata:
     """class to represent an Automata"""
 
@@ -10,7 +7,7 @@ class Automata:
         self.finalstates = []
         self.transitions = dict()
         self.language = language
-
+        self.table=list()
     @staticmethod
     def epsilon():
         return "e"
@@ -66,31 +63,6 @@ class Automata:
                     if Automata.epsilon() in self.transitions[state][tns] and tns not in allstates:
                         states.add(tns)
         return allstates
-
-    def display(self):
-        print ("states:", self.states)
-        print ("start state: ", self.startstate)
-        print ("final states:", self.finalstates)
-        print ("transitions:")
-        for fromstate, tostates in self.transitions.items():
-            for state in tostates:
-                for char in tostates[state]:
-                    print ("  ",fromstate, "->", state, "on '"+char+"'",)
-
-
-    def getPrintText(self):
-        text = "language: {" + ", ".join(self.language) + "}\n"
-        text += "states: {" + ", ".join(map(str,self.states)) + "}\n"
-        text += "start state: " + str(self.startstate) + "\n"
-        text += "final states: {" + ", ".join(map(str,self.finalstates)) + "}\n"
-        text += "transitions:\n"
-        linecount = 5
-        for fromstate, tostates in self.transitions.items():
-            for state in tostates:
-                for char in tostates[state]:
-                    text += "    " + str(fromstate) + " -> " + str(state) + " on '" + char + "'\n"
-                    linecount +=1
-        return [text, linecount]
 
     def newBuildFromNumber(self, startnum):
         translations = {}
@@ -190,7 +162,6 @@ class BuildAutomata:
         star.addtransition_dict(a.transitions)
         return star
 
-
 class DFAfromNFA:
     """class for building dfa from e-nfa and minimise it"""
 
@@ -204,12 +175,6 @@ class DFAfromNFA:
     def getMinimisedDFA(self):
         return self.minDFA
 
-    def displayDFA(self):
-        self.dfa.display()
-
-    def displayMinimisedDFA(self):
-        self.minDFA.display()
-
     def buildDFA(self, nfa):
         allstates = dict()
         eclose = dict()
@@ -220,7 +185,7 @@ class DFAfromNFA:
         dfa.setstartstate(count)
         states = [[state1, count]]
         allstates[count] = state1
-        count +=  1
+        count += 1
         while len(states) != 0:
             [state, fromindex] = states.pop()
             for char in dfa.language:
@@ -234,106 +199,43 @@ class DFAfromNFA:
                         states.append([trstates, count])
                         allstates[count] = trstates
                         toindex = count
-                        count +=  1
+                        count += 1
                     else:
-                        toindex = [k for k, v in allstates.items() if v  ==  trstates][0]
+                        toindex = [k for k, v in allstates.items() if v == trstates][0]
                     dfa.addtransition(fromindex, toindex, char)
         for value, state in allstates.items():
             if nfa.finalstates[0] in state:
                 dfa.addfinalstates(value)
+
+        dfa.language = sorted(dfa.language)#dorost kardane transition table
+        dfa.table.append(None)
+        for i in range(1, len(dfa.transitions) + 1):
+            temp_tran = list()
+            for char in dfa.language:
+               temp_tran.append(dfa.gettransitions(i, char))
+            dfa.table.append(temp_tran)
+
+        dfa.table.append([len(dfa.table)]*len(dfa.language)) #trap state
+
+        for i in range(1, len(dfa.table) - 1): # gozashtane transition az state ha be trap state va avaz kardan type az set be int
+            for j in range(len(dfa.language)):
+                if dfa.table[i][j] == set():
+                    dfa.table[i][j] = len(dfa.table)-1
+                else:
+                    dfa.table[i][j] = next(iter(dfa.table[i][j]))
+
+        for i in range(1,len( dfa.table)):
+            for column in dfa.table[i]:
+                if  column==set(): dfa.table[i][dfa.table[i].index(column)]=len(dfa.table)-1
+
+        # for i in range(1,len(dfa.table)-1):
+        #     for j in range(len(dfa.language)):
+        #         if dfa.table[i][j]==set(): dfa.table[i][j]=len(dfa.table)
+        #         elif type( dfa.table[i][j])=='set' :dfa.table[i][j]= next(iter(dfa.table[i][j]))
         self.dfa = dfa
 
-    def acceptsString(self, string):
-        currentstate = self.dfa.startstate
-        for ch in string:
-            if ch==":e:":
-                continue
-            st = list(self.dfa.gettransitions(currentstate, ch))
-            if len(st) == 0:
-                return False
-            currentstate = st[0]
-        if currentstate in self.dfa.finalstates:
-            return True
-        return False
-
     def minimise(self):
-        states = list(self.dfa.states)
-        n = len(states)
-        unchecked = dict()
-        count = 1
-        distinguished = []
-        equivalent = dict(zip(range(len(states)), [{s} for s in states]))
-        pos = dict(zip(states,range(len(states))))
-        for i in range(n-1):
-            for j in range(i+1, n):
-                if not ([states[i], states[j]] in distinguished or [states[j], states[i]] in distinguished):
-                    eq = 1
-                    toappend = []
-                    for char in self.dfa.language:
-                        s1 = self.dfa.gettransitions(states[i], char)
-                        s2 = self.dfa.gettransitions(states[j], char)
-                        if len(s1) != len(s2):
-                            eq = 0
-                            break
-                        if len(s1) > 1:
-                            raise BaseException("Multiple transitions detected in DFA")
-                        elif len(s1) == 0:
-                            continue
-                        s1 = s1.pop()
-                        s2 = s2.pop()
-                        if s1 != s2:
-                            if [s1, s2] in distinguished or [s2, s1] in distinguished:
-                                eq = 0
-                                break
-                            else:
-                                toappend.append([s1, s2, char])
-                                eq = -1
-                    if eq == 0:
-                        distinguished.append([states[i], states[j]])
-                    elif eq == -1:
-                        s = [states[i], states[j]]
-                        s.extend(toappend)
-                        unchecked[count] = s
-                        count += 1
-                    else:
-                        p1 = pos[states[i]]
-                        p2 = pos[states[j]]
-                        if p1 != p2:
-                            st = equivalent.pop(p2)
-                            for s in st:
-                                pos[s] = p1
-                            equivalent[p1] = equivalent[p1].union(st)
-        newFound = True
-        while newFound and len(unchecked) > 0:
-            newFound = False
-            toremove = set()
-            for p, pair in unchecked.items():
-                for tr in pair[2:]:
-                    if [tr[0], tr[1]] in distinguished or [tr[1], tr[0]] in distinguished:
-                        unchecked.pop(p)
-                        distinguished.append([pair[0], pair[1]])
-                        newFound = True
-                        break
-        for pair in unchecked.values():
-            p1 = pos[pair[0]]
-            p2 = pos[pair[1]]
-            if p1 != p2:
-                st = equivalent.pop(p2)
-                for s in st:
-                    pos[s] = p1
-                equivalent[p1] = equivalent[p1].union(st)
-        if len(equivalent) == len(states):
-            self.minDFA = self.dfa
-        else:
-            self.minDFA = self.dfa.newBuildFromEquivalentStates(equivalent, pos)
-    # def minimise(self):
-    #     sets=list()
-    #     sets.append(self.dfa.startstate)
-    #     sets.append(self.dfa.finalstates)
-    #     return "hello"
-
-
-
+        return
 class NFAfromRegex:
     """class for building e-nfa from regular expressions"""
 
@@ -353,8 +255,6 @@ class NFAfromRegex:
     def getNFA(self):
         return self.nfa
 
-    def displayNFA(self):
-        self.nfa.display()
 
     def buildNFA(self):
         language = set()
@@ -432,29 +332,3 @@ class NFAfromRegex:
                 self.automata.append(BuildAutomata.plusstruct(b,a))
             elif operator == self.dot:
                 self.automata.append(BuildAutomata.dotstruct(b,a))
-
-def drawGraph(automata, file = ""):
-    """From https://github.com/max99x/automata-editor/blob/master/util.py"""
-    f = popen(r"dot -Tpng -o graph%s.png" % file, 'w')
-    try:
-        f.write(automata.getDotFile())
-    except:
-        raise BaseException("Error creating graph")
-    finally:
-        f.close()
-
-def isInstalled(program):
-    """From http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python"""
-    import os
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program) or is_exe(program+".exe"):
-            return True
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file) or is_exe(exe_file+".exe"):
-                return True
-    return False
