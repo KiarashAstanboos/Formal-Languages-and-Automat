@@ -20,6 +20,7 @@ nfaObj2 = NFAfromRegex(inp2)
 nfa2 = nfaObj2.getNFA()
 dfaObj2 = DFAfromNFA(nfa2)
 dfa2 = dfaObj2.getDFA()
+print( 'hello')
 
 
 # if minDFA2.states==minDFA1.states :

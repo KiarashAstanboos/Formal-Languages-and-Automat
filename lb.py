@@ -207,7 +207,7 @@ class DFAfromNFA:
             if nfa.finalstates[0] in state:
                 dfa.addfinalstates(value)
 
-        dfa.language = sorted(dfa.language)#dorost kardane transition table
+        dfa.language = sorted(dfa.language)                  #dorost kardane transition table
         dfa.table.append(None)
         for i in range(1, len(dfa.transitions) + 1):
             temp_tran = list()
@@ -217,24 +217,29 @@ class DFAfromNFA:
 
         dfa.table.append([len(dfa.table)]*len(dfa.language)) #trap state
 
-        for i in range(1, len(dfa.table) - 1): # gozashtane transition az state ha be trap state va avaz kardan type az set be int
+        for i in range(1, len(dfa.table) - 1):             # gozashtane transition az state ha be trap state va avaz kardan type az set be int
             for j in range(len(dfa.language)):
                 if dfa.table[i][j] == set():
                     dfa.table[i][j] = len(dfa.table)-1
                 else:
                     dfa.table[i][j] = next(iter(dfa.table[i][j]))
 
-        for i in range(1,len( dfa.table)):
-            for column in dfa.table[i]:
-                if  column==set(): dfa.table[i][dfa.table[i].index(column)]=len(dfa.table)-1
+        flag=0                                            # momkene az trap estefade nashe . age estefade nashode bashe az table hazf mishe
+        for i in dfa.table[1:len(dfa.table)-1]:
+            for j in i:
+                if j==len(dfa.table)-1 :
+                    flag=1
+                    break
+        if flag==0 : dfa.table.pop()
 
-        # for i in range(1,len(dfa.table)-1):
-        #     for j in range(len(dfa.language)):
-        #         if dfa.table[i][j]==set(): dfa.table[i][j]=len(dfa.table)
-        #         elif type( dfa.table[i][j])=='set' :dfa.table[i][j]= next(iter(dfa.table[i][j]))
+        if len(dfa.table)-1 not in dfa.states: dfa.states.add(len(dfa.table)-1)  # ezafe kardane state trap be dfa.states
         self.dfa = dfa
 
+
     def minimise(self):
+        sets=list()
+        sets.append(list(self.dfa.states.difference(self.dfa.finalstates)))
+        sets.append(self.dfa.finalstates)
         return
 class NFAfromRegex:
     """class for building e-nfa from regular expressions"""
