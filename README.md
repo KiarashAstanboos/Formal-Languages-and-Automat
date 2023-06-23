@@ -3,6 +3,7 @@ Equality of two regular expressions
 getting two regular expressions as an input and determine if they are equal or not.
 
 Example:
+
 input:
 𝑏∗(𝑎𝑏𝑏∗)∗(𝑎 + e)
 (𝑏 + 𝑎𝑏)∗(𝑎 + e)
