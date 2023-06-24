@@ -214,14 +214,15 @@ class DFAfromNFA:
             for char in dfa.language:
                temp_tran.append(dfa.gettransitions(i, char))
             dfa.table.append(temp_tran)
-
+        if len(dfa.states)== len(dfa.table):
+            dfa.table.append([len(dfa.table)+1]*len(dfa.language)) # momkene state akhar nfa transition nadashte bashe  vase hamin be ezaye har alphabet mibarimesh be trap
         dfa.table.append([len(dfa.table)]*len(dfa.language)) #trap state
 
         for i in range(1, len(dfa.table) - 1):             # gozashtane transition az state ha be trap state va avaz kardan type az set be int
             for j in range(len(dfa.language)):
                 if dfa.table[i][j] == set():
                     dfa.table[i][j] = len(dfa.table)-1
-                else:
+                elif not str(dfa.table[i][j]).isnumeric():
                     dfa.table[i][j] = next(iter(dfa.table[i][j]))
 
         flag=0                                            # momkene az trap estefade nashe . age estefade nashode bashe az table hazf mishe

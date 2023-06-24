@@ -4,7 +4,7 @@ import sys
 
 # inp1 = input("please enter input 1")
 # inp2=  input("please enter input 2")
-inp1 = "a*b*c*"
+inp1 = "abc"
 inp2="((b*)+(b+ab)*a)b*"
 
 print("Regular Expression: ", inp1)
