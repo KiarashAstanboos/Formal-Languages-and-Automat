@@ -241,6 +241,7 @@ class DFAfromNFA:
         sets=list()
         sets.append(list(self.dfa.states.difference(self.dfa.finalstates)))
         sets.append(self.dfa.finalstates)
+        print("hello")
         return
 class NFAfromRegex:
     """class for building e-nfa from regular expressions"""
