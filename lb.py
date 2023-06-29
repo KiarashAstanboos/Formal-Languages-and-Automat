@@ -167,7 +167,7 @@ class DFAfromNFA:
 
     def __init__(self, nfa):
         self.buildDFA(nfa)
-        self.minimise()
+
 
     def getDFA(self):
         return self.dfa
@@ -209,7 +209,7 @@ class DFAfromNFA:
 
         dfa.language = sorted(dfa.language)                  #dorost kardane transition table
         dfa.table.append(None)
-        for i in range(1, len(dfa.transitions) + 1):
+        for i in range(1, len(dfa.states) + 1):
             temp_tran = list()
             for char in dfa.language:
                temp_tran.append(dfa.gettransitions(i, char))
@@ -236,13 +236,115 @@ class DFAfromNFA:
         if len(dfa.table)-1 not in dfa.states: dfa.states.add(len(dfa.table)-1)  # ezafe kardane state trap be dfa.states
         self.dfa = dfa
 
+    def to_Which_state(self, state, input):  # state va vurudi begire maqsad ro bede
+        return self.dfa.table[state][input]
+
+    def in_which_state(self, state, minimized):  # state ro begire va bege too che state dfa minimize shode qarar dare
+        for i in minimized:
+            if (state in i): return minimized.index(i)
 
     def minimise(self):
-        sets=list()
-        sets.append(list(self.dfa.states.difference(self.dfa.finalstates)))
-        sets.append(self.dfa.finalstates)
-        print("mama")
+        unmarked=list()
+        marked=list()
+
+        # pairs
+        for i in self.dfa.states:
+            for j in self.dfa.states:
+                if j>i  : unmarked.append((i,j))
+        # joda kardane final az nonfinal
+        t=0
+        while t<(len(unmarked)):
+            tuples=unmarked[t]
+            a=tuples[0]
+            b=tuples[1]
+            if ((a in self.dfa.finalstates) & (b not in self.dfa.finalstates)) or  ((b in self.dfa.finalstates) & (a not in self.dfa.finalstates)):
+                    marked.append(unmarked.pop(unmarked.index(tuples)))
+            else :t+=1
+        #peyda kardane marked
+        flag = True
+        while flag:
+            flag = False
+            t = 0
+            while t < (len(unmarked)):
+                tuples = unmarked[t]
+                a = tuples[0]
+                b = tuples[1]
+                for alphabet in range(len(self.dfa.language)):
+                    if ((self.dfa.table[a][alphabet],self.dfa.table[b][alphabet]) in marked) or \
+                            ((self.dfa.table[b][alphabet],self.dfa.table[a][alphabet]) in marked):
+                          marked.append(unmarked.pop(unmarked.index(tuples)))
+                          flag = True
+                          break
+                else:
+                    t += 1
+
+        #merge kardane state haye yeksan
+        flag = True
+        while flag:
+            flag=False
+            t = 0
+            while t < (len(unmarked)):
+                 s=t+1
+                 while s <len(unmarked):
+                    if len(set(unmarked[t]) & set(unmarked[s])) >=1:
+                        unmarked[t]=tuple(set(unmarked[t] + unmarked[s]))
+                        unmarked.pop(s)
+                        if s==len(unmarked): s=len(unmarked)-1
+                        flag =True
+                    s+=1
+                 t+=1
+
+
+
+        minimized_states=[]
+        minimized_states = minimized_states + unmarked
+        for i in self.dfa.states: # state haye dfa minimized shode
+            flag = False
+            for j in unmarked:
+                if (i in j): flag=True
+            if flag==False: minimized_states.append((i,))
+
+
+
+########################################################
+
+
+        minimized_table=[]
+        transition = []
+
+        for alpha in range(len(self.dfa.language)): # transition start state
+            next_old = self.to_Which_state(1, alpha)
+            next_new = self.in_which_state(next_old, minimized_states)
+            transition.append(next_new)
+        minimized_table.append(transition)
+        start=self.in_which_state(1,minimized_states)
+
+
+        for i in minimized_states: # transition table baqie state ha
+            if minimized_states.index(i)!= start:
+                transition=[]
+                state=i[0]
+                for alpha in range(len(self.dfa.language)):
+                    next_old=self.to_Which_state(state,alpha)
+                    next_new=self.in_which_state(next_old,minimized_states)
+                    transition.append(next_new)
+                minimized_table.append(transition)
+        final_states=[]
+        for i in self.dfa.finalstates:
+            new_final=self.in_which_state(i,minimized_states)
+            if new_final not in final_states: final_states.append(new_final)
+
+        self.dfa.finalstates=final_states
+        self.dfa.table=minimized_table
+        states=[]
+        for i in range(len(minimized_table)): states.append(i)
+        self.dfa.states=states
+
+
         return
+
+
+
 class NFAfromRegex:
     """class for building e-nfa from regular expressions"""
 
