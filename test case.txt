@@ -1,0 +1,16 @@
+b*(abb*)*(a+e)
+(b+ab)*(a+e)
+(b*)+(b+ab)*ab*
+
+(a+b+c)*
+a*b*c*
+
+(a+b)*ab(a+b)*
+(a+b)*ba(a+b)*
+
+
+b*(aaab*)* 
+(b*aaa) * b
+
+b*(ab*)*
+(b*a)*b*
